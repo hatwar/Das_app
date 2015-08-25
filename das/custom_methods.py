@@ -41,3 +41,29 @@ def is_pi_already_exsits(sales_order):
 		return "no invoice"
 	else:
 		return invoice
+
+
+@frappe.whitelist()
+def make_PO(source_name, target_doc=None):
+	def update_item(source, target, source_parent):
+		target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
+		target.price_list_rate=0
+		target.rate=0
+	target_doc = get_mapped_doc("Sales Order", source_name, {
+		"Sales Order": {
+			"doctype": "Purchase Order",
+			"validation": {
+				"docstatus": ["=", 1]
+			}
+		},
+		"Sales Order Item": {
+			"doctype": "Purchase Order Item",
+			"field_map": {
+				"parent": "purchase_order",
+			},
+			"postprocess": update_item,
+			"condition": lambda doc: frappe.db.get_value("Item",doc.item_code,"is_service_item") == "No"
+		}
+	}, target_doc)
+
+	return target_doc

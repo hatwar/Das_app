@@ -67,6 +67,9 @@ app_version = "0.0.1"
 # Hook on document methods and events
 
 doc_events = {
+	"Purchase Receipt": {
+		"before_submit": "das.das_payment_info.generate_purchase_receipt_batch_no"
+	},
 	"Delivery Note": {
 		"validate": "das.das_validations.delivery_note_validations",
 		"on_submit": "das.das_payment_info.on_delivery_note_submit",
@@ -74,6 +77,7 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		# "validate": "das.das_validations.validations_against_batch_number",
+		"before_submit":"das.das_payment_info.percent_paid_amount",
 		"on_submit": "das.das_payment_info.on_sales_invoice_submit",
 		"on_cancel": "das.das_payment_info.on_sales_invoice_cancel"
 	},
@@ -89,31 +93,31 @@ doc_events = {
 	},
 	"Journal Entry": {
 		# "validate": "das.das_validations.delivery_note_validations"
-		"on_submit": "das.das_payment_info.on_journal_entry_submit",
-		"on_cancel": "das.das_payment_info.on_journal_entry_cancel"
+		"on_submit": ["das.das_payment_info.on_journal_entry_submit","das.das_payment_info.percent_paid_on_submit_jv"],
+		"on_cancel": ["das.das_payment_info.on_journal_entry_cancel","das.das_payment_info.percent_paid_on_cancel_jv"]
 	},
 }
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"das.tasks.all"
 # 	],
 # 	"daily": [
 # 		"das.tasks.daily"
 # 	],
-# 	"hourly": [
-# 		"das.tasks.hourly"
-# 	],
+	"hourly": [
+		"das.so_csv.make_csv"
+	],
 # 	"weekly": [
 # 		"das.tasks.weekly"
 # 	]
 # 	"monthly": [
 # 		"das.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------

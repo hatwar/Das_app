@@ -230,14 +230,15 @@ def on_journal_entry_submit(doc, method):
         sales_orders = get_sales_orders_from_sales_invoice([info.get("docname")]) if info.get("against_doctype") == "Sales Invoice" else [frappe.db.get_value("Purchase Invoice",info.get("docname"),"sales_order")]
         for sales_order in sales_orders:
             payment = get_payment_information_doc(sales_order)
-            if info.get("against_doctype") == "Purchase Invoice":
-                payment.pi_paid += doc.total_debit
-            elif info.get("against_doctype") == "Sales Invoice":
-                # find si detail row and update the paid
-                for si_detail_row in payment.si_details:
-                    si_detail_row.paid += doc.total_debit if si_detail_row.sales_invoice == info.get("docname") else 0
+            if payment:
+                if info.get("against_doctype") == "Purchase Invoice":
+                    payment.pi_paid += doc.total_debit
+                elif info.get("against_doctype") == "Sales Invoice":
+                    # find si detail row and update the paid
+                    for si_detail_row in payment.si_details:
+                        si_detail_row.paid += doc.total_debit if si_detail_row.sales_invoice == info.get("docname") else 0
 
-            payment.save(ignore_permissions=True)
+                payment.save(ignore_permissions=True)
 
 def on_journal_entry_cancel(doc, method):
     """
@@ -254,11 +255,75 @@ def on_journal_entry_cancel(doc, method):
         sales_orders = get_sales_orders_from_sales_invoice([info.get("docname")]) if info.get("against_doctype") == "Sales Invoice" else [frappe.db.get_value("Purchase Invoice",info.get("docname"),"sales_order")]
         for sales_order in sales_orders:
             payment = get_payment_information_doc(sales_order)
-            if info.get("against_doctype") == "Purchase Invoice":
-                payment.pi_paid -= doc.total_debit
-            elif info.get("against_doctype") == "Sales Invoice":
-                # find si detail row and update the paid
-                for si_detail_row in payment.si_details:
-                    si_detail_row.paid -= doc.total_debit if si_detail_row.sales_invoice == info.get("docname") else 0
+            if payment:
+                if info.get("against_doctype") == "Purchase Invoice":
+                    payment.pi_paid -= doc.total_debit
+                elif info.get("against_doctype") == "Sales Invoice":
+                    # find si detail row and update the paid
+                    for si_detail_row in payment.si_details:
+                        si_detail_row.paid -= doc.total_debit if si_detail_row.sales_invoice == info.get("docname") else 0
 
-            payment.save(ignore_permissions=True)
+                payment.save(ignore_permissions=True)
+
+#Percentage paid amount on submit sales Invoice
+def percent_paid_amount(doc, method):
+    total_advance = frappe.db.get_value("Sales Invoice", {"name":doc.name}, "total_advance") or 0
+    jv_amount = get_total_jv_amount(doc.name) or 0
+    total_paid_amount=total_advance + jv_amount
+    doc.paid_amount_percentage=(total_paid_amount*100/doc.base_grand_total) or 0
+
+def get_total_jv_amount(si_name):
+    jv_amount= frappe.db.sql("""select sum(credit) from `tabJournal Entry Account` where docstatus=1 and against_invoice='%s'"""%(si_name),as_list=1)
+    return jv_amount[0][0] or 0
+
+#percent paid amount on submit of jv
+def percent_paid_on_submit_jv(doc, method):
+    for je_detail in doc.accounts:
+        calculate_percentage(je_detail)
+
+#percent paid amount on cancel jv 
+def percent_paid_on_cancel_jv(doc, method):
+    for je_detail in doc.accounts:
+         calculate_percentage(je_detail)
+
+def calculate_percentage(je_detail):
+    invoice=find_against_invoice(je_detail)
+    if(invoice):
+        total_advance=frappe.db.get_value("Sales Invoice", {"name":invoice}, "total_advance") or 0
+        jv_amount=get_total_jv_amount(invoice) or 0
+        total_paid_amount=total_advance+jv_amount
+        base_grand_total=frappe.db.get_value("Sales Invoice", {"name":invoice}, "base_grand_total") or 0
+        paid_amount_percentage=(total_paid_amount*100/base_grand_total) or 0
+        update_sales_invoice(invoice, paid_amount_percentage)
+    else:
+        pass
+
+def update_sales_invoice(invoice, amount):
+    frappe.db.sql("""update `tabSales Invoice` set paid_amount_percentage='%s' where name='%s'"""%(amount,invoice))
+
+def find_against_invoice(je_detail):
+    if je_detail.against_invoice:
+            return je_detail.against_invoice
+
+def generate_purchase_receipt_batch_no(doc, method):
+    """
+        check for item has batch no enable or not
+        check batch no. in field or not
+        if not generate batch doc automatically
+        set batch_id in format [Product Code]-[YYMMDD]-[XXXX]
+        set batch id in purchase receipt batch field
+    """
+
+    for item in doc.items:
+        is_batch=frappe.db.get_value("Item", {"item_code":item.item_code}, "has_batch_no")
+        if(is_batch=='Yes' and not item.batch_no):
+            item.batch_no = make_batch_doc(item)
+
+def make_batch_doc(itm):
+    from frappe.model.naming import make_autoname
+    batch = frappe.new_doc("Batch")
+    batch.batch_id=make_autoname(itm.item_code +'.-'+'.YY.MM.DD'+'.-'+'.#####')
+    batch.item=itm.item_code
+    batch.save(ignore_permissions=True)
+    
+    return batch.batch_id
