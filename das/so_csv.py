@@ -4,7 +4,6 @@ import csv
 def make_csv():
 	column_header=[['Transaction Date', 'Name', 'Customer', 'Customer Address', 'Company', 'Delivery Date', 'Installation End Date', 'Invoices Submitted', 'Products', 'Installation Status', 'Documents Preparation', 'Customer Payment', 'Technician Payment', 'Customer Signed Order']]
 	column_data=get_data()
-	
 	if(column_data):
 		for data in column_data:
 			column_header.append(data)
@@ -13,7 +12,7 @@ def make_csv():
 	print "closed"
 
 def get_data():
-	frappe.db.sql("""select transaction_date,name,customer,customer_address,company,delivery_date,installation_end_date,
+	return frappe.db.sql("""select transaction_date,name,customer,customer_address,company,delivery_date,installation_end_date,
 invoices_submitted,products,installation_status,documents_preparation,_customer_payment,technician_payment,
 customer_signed_order from `tabSales Order` where docstatus=1""" ,as_list=1)	
 
