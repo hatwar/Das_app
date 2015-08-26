@@ -270,7 +270,7 @@ def percent_paid_amount(doc, method):
     total_advance = frappe.db.get_value("Sales Invoice", {"name":doc.name}, "total_advance") or 0
     jv_amount = get_total_jv_amount(doc.name) or 0
     total_paid_amount=total_advance + jv_amount
-    doc.paid_amount_percentage=(total_paid_amount*100/doc.base_grand_total) or 0
+    doc.paid_amount_percentage=round((total_paid_amount*100/doc.base_grand_total), 2) or 0.0
 
 def get_total_jv_amount(si_name):
     jv_amount= frappe.db.sql("""select sum(credit) from `tabJournal Entry Account` where docstatus=1 and against_invoice='%s'"""%(si_name),as_list=1)
@@ -293,7 +293,8 @@ def calculate_percentage(je_detail):
         jv_amount=get_total_jv_amount(invoice) or 0
         total_paid_amount=total_advance+jv_amount
         base_grand_total=frappe.db.get_value("Sales Invoice", {"name":invoice}, "base_grand_total") or 0
-        paid_amount_percentage=(total_paid_amount*100/base_grand_total) or 0
+        paid_amount_percentage = (total_paid_amount*100/base_grand_total) or 0
+        paid_amount_percentage = round(paid_amount_percentage, 2)
         update_sales_invoice(invoice, paid_amount_percentage)
     else:
         pass

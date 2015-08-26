@@ -45,3 +45,7 @@ def validations_against_supplier(doc,method):
 		technician = frappe.db.get_value("Sales Order",doc.sales_order, "technician")
 		if technician != doc.supplier:
 			frappe.throw("Invalid Supplier !!\nSupplier should be : %s"%(technician))
+
+def sales_order_validations(doc, method):
+	frappe.errprint("heloooooooo")
+	doc.gross_profit = doc.base_grand_total - doc.gross_profit

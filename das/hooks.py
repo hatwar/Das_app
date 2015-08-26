@@ -87,7 +87,7 @@ doc_events = {
 		"on_cancel": "das.das_payment_info.on_purchase_invoice_cancel"
 	},
 	"Sales Order": {
-		# "validate": "das.das_validations.delivery_note_validations"
+		"before_save": "das.das_validations.sales_order_validations",
 		"on_submit": "das.das_payment_info.on_sales_order_submit",
 		"on_cancel": "das.das_payment_info.on_sales_order_cancel"
 	},
