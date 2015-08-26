@@ -48,4 +48,4 @@ def validations_against_supplier(doc,method):
 
 def sales_order_validations(doc, method):
 	frappe.errprint("heloooooooo")
-	doc.gross_profit = doc.base_grand_total - doc.gross_profit
+	doc.gross_profit = doc.base_grand_total - (doc.gross_profit or 0)

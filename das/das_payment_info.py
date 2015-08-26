@@ -273,7 +273,7 @@ def percent_paid_amount(doc, method):
     doc.paid_amount_percentage=round((total_paid_amount*100/doc.base_grand_total), 2) or 0.0
 
 def get_total_jv_amount(si_name):
-    jv_amount= frappe.db.sql("""select sum(credit) from `tabJournal Entry Account` where docstatus=1 and against_invoice='%s'"""%(si_name),as_list=1)
+    jv_amount= frappe.db.sql("""select sum(credit) from `tabJournal Entry Account` where docstatus=1 and against_invoice='%s' and is_advance='No'"""%(si_name),as_list=1)
     return jv_amount[0][0] or 0
 
 #percent paid amount on submit of jv
