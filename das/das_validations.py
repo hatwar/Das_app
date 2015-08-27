@@ -1,5 +1,6 @@
 import frappe
 from datetime import datetime as dt
+from frappe.utils import cstr, cint
 
 def delivery_note_validations(doc, method):
 	# start date end end date
@@ -34,7 +35,7 @@ def is_valid_delivery_date(doc):
 def validations_against_batch_number(doc, method):
 	err_items = []
 	for item in doc.items:
-		if frappe.db.get_value("Item",item.item_code,"has_batch_no") == "Yes" and not item.batch_no:
+		if frappe.db.get_value("Item",item.item_code,"has_batch_no") == 1 and not cint(item.batch_no):
 			err_items.append(item.item_code)
 
 	if err_items:
@@ -47,5 +48,4 @@ def validations_against_supplier(doc,method):
 			frappe.throw("Invalid Supplier !!\nSupplier should be : %s"%(technician))
 
 def sales_order_validations(doc, method):
-	frappe.errprint("heloooooooo")
 	doc.gross_profit = doc.base_grand_total - (doc.gross_profit or 0)

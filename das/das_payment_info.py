@@ -205,7 +205,7 @@ def get_doctype_name_from_je(doc):
                 "against_doctype":"Sales Invoice",
                 "docname":je_detail.reference_name
             }
-        elif je_detail.against_voucher:
+        elif je_detail.reference_type=="Purchase Invoice":
             return {
                 "against_doctype":"Purchase Invoice",
                 "docname":je_detail.reference_name
@@ -319,7 +319,7 @@ def generate_purchase_receipt_batch_no(doc, method):
 
     for item in doc.items:
         is_batch=frappe.db.get_value("Item", {"item_code":item.item_code}, "has_batch_no")
-        if(is_batch=='Yes' and not item.batch_no):
+        if(is_batch==1 and not item.batch_no):
             item.batch_no = make_batch_doc(item)
 
 def make_batch_doc(itm):

@@ -29,7 +29,7 @@ def make_purchase_invoice(source_name, target_doc=None):
 				"parent": "purchase_invoice"
 			},
 			"postprocess": update_item,
-			"condition": lambda doc: frappe.db.get_value("Item",doc.item_code,"is_service_item") == "Yes"
+			"condition": lambda doc: frappe.db.get_value("Item",doc.item_code,"is_service_item") == 1
 		},
 	}, target_doc, postprocess)
 
@@ -63,12 +63,22 @@ def make_PO(source_name, target_doc=None):
 				"parent": "purchase_order",
 			},
 			"postprocess": update_item,
-			"condition": lambda doc: frappe.db.get_value("Item",doc.item_code,"is_service_item") == "No"
+			"condition": lambda doc: frappe.db.get_value("Item",doc.item_code,"is_service_item") == 0
 		}
 	}, target_doc)
 
 	return target_doc
 
-# @frappe.whitelist()
-# def is_service_items_only(sales_order):
-# 	frappe.errprint(sales_order.items)
+@frappe.whitelist()
+def is_service_items_only(sales_order):
+	import json
+	pass_item=''
+	sales_order = json.loads(sales_order)
+	for item in sales_order.get("items"):
+		is_serv=frappe.db.get_value("Item",item.get("item_code"),"is_service_item")
+		if not is_serv:
+			return "success"
+	return "Fail"		
+
+		
+	
