@@ -83,6 +83,25 @@ cur_frm.cscript.make_po = function(doc){
 		frm: cur_frm
 	})
 }
+// cur_frm.cscript.make_po = function(doc){
+// 	return frappe.call({
+// 			method: "das.custom_methods.is_service_items_only",
+// 			args: {
+// 				sales_order:cur_frm.doc
+// 			},
+// 			callback: function(r){
+// 				if(r.message == "other_items"){
+// 					frappe.model.open_mapped_doc({
+// 						method: "das.custom_methods.make_PO",
+// 						frm: cur_frm
+// 					})
+// 				}
+// 				else{
+// 					frappe.msgprint("No Items Found for creating PO");
+// 				}
+// 			}
+// 	});
+// }
 
 cur_frm.cscript.make_purchase_invoice = function(doc){
 	return frappe.call({

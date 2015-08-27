@@ -200,15 +200,15 @@ def get_doctype_name_from_je(doc):
     result = {}
 
     for je_detail in doc.accounts:
-        if je_detail.against_invoice:
+        if je_detail.reference_type == "Sales Invoice":
             return {
                 "against_doctype":"Sales Invoice",
-                "docname":je_detail.against_invoice
+                "docname":je_detail.reference_name
             }
         elif je_detail.against_voucher:
             return {
                 "against_doctype":"Purchase Invoice",
-                "docname":je_detail.against_voucher
+                "docname":je_detail.reference_name
             }
         else:
             return {}
@@ -273,21 +273,23 @@ def percent_paid_amount(doc, method):
     doc.paid_amount_percentage=round((total_paid_amount*100/doc.base_grand_total), 2) or 0.0
 
 def get_total_jv_amount(si_name):
-    jv_amount= frappe.db.sql("""select sum(credit) from `tabJournal Entry Account` where docstatus=1 and against_invoice='%s' and is_advance='No'"""%(si_name),as_list=1)
+    jv_amount= frappe.db.sql("""select sum(credit) from `tabJournal Entry Account` where docstatus=1 and reference_type='Sales Invoice' and reference_name='%s' and is_advance='No'"""%(si_name),as_list=1)
     return jv_amount[0][0] or 0
 
 #percent paid amount on submit of jv
 def percent_paid_on_submit_jv(doc, method):
     for je_detail in doc.accounts:
-        calculate_percentage(je_detail)
+        if(je_detail.reference_type=="Sales Invoice"):
+            calculate_percentage(je_detail)
 
 #percent paid amount on cancel jv 
 def percent_paid_on_cancel_jv(doc, method):
     for je_detail in doc.accounts:
-         calculate_percentage(je_detail)
+        if(je_detail.reference_type=="Sales Invoice"):
+            calculate_percentage(je_detail)
 
 def calculate_percentage(je_detail):
-    invoice=find_against_invoice(je_detail)
+    invoice=je_detail.reference_name
     if(invoice):
         total_advance=frappe.db.get_value("Sales Invoice", {"name":invoice}, "total_advance") or 0
         jv_amount=get_total_jv_amount(invoice) or 0
@@ -302,9 +304,9 @@ def calculate_percentage(je_detail):
 def update_sales_invoice(invoice, amount):
     frappe.db.sql("""update `tabSales Invoice` set paid_amount_percentage='%s' where name='%s'"""%(amount,invoice))
 
-def find_against_invoice(je_detail):
-    if je_detail.against_invoice:
-            return je_detail.against_invoice
+# def find_against_invoice(je_detail):
+#     if je_detail.against_invoice:
+#             return je_detail.against_invoice
 
 def generate_purchase_receipt_batch_no(doc, method):
     """

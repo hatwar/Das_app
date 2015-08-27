@@ -2,6 +2,7 @@ import frappe
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt
 
+
 @frappe.whitelist()
 def make_purchase_invoice(source_name, target_doc=None):
 	def postprocess(source, target):
@@ -67,3 +68,7 @@ def make_PO(source_name, target_doc=None):
 	}, target_doc)
 
 	return target_doc
+
+# @frappe.whitelist()
+# def is_service_items_only(sales_order):
+# 	frappe.errprint(sales_order.items)
