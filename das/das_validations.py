@@ -48,4 +48,7 @@ def validations_against_supplier(doc,method):
 			frappe.throw("Invalid Supplier !!\nSupplier should be : %s"%(technician))
 
 def sales_order_validations(doc, method):
-	doc.gross_profit = doc.base_grand_total - (doc.gross_profit or 0)
+	esp = doc.exp_supplier_payment or 0
+	etp = doc.exp_technician_payment or 0
+	easp= doc.exp_additional_services_payment or 0
+	doc.gross_profit = doc.base_grand_total - (esp + etp + easp)
