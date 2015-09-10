@@ -9,6 +9,7 @@ def make_purchase_invoice(source_name, target_doc=None):
 		target.sales_order = source.name
 		target.supplier = source.technician
 		target.credit_to = frappe.db.get_value("Company", frappe.db.get_default("company"), "default_payable_account")
+		target.taxes_and_charges = ''
 
 	def update_item(source, target, source_parent):
 		target.amount = flt(source.amount) - flt(source.billed_amt)
@@ -46,7 +47,12 @@ def is_pi_already_exsits(sales_order):
 
 @frappe.whitelist()
 def make_PO(source_name, target_doc=None):
+	def postprocess(source, target):
+		target.taxes_and_charges = frappe.db.get_value('Purchase Taxes and Charges Template', {'is_default':1}, 'name') or None
+
 	def update_item(source, target, source_parent):
+		target.uom = source.stock_uom
+		target.conversion_factor = 1
 		target.qty = target.amount / flt(source.rate) if (source.rate and source.billed_amt) else source.qty
 		target.price_list_rate=0
 		target.rate=0
@@ -65,8 +71,7 @@ def make_PO(source_name, target_doc=None):
 			"postprocess": update_item,
 			"condition": lambda doc: frappe.db.get_value("Item",doc.item_code,"is_service_item") == 0
 		}
-	}, target_doc)
-
+	}, target_doc, postprocess)
 	return target_doc
 
 @frappe.whitelist()
